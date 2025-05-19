@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Finance Tracker</title>
+  <style>
+
+  #load-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+  color: #63a4ff;
+  font-family: 'Press Start 2P', cursive;
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 4rem;
+  z-index: 2000;
+    user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.transparent-box {
+  width: 80%;
+  max-width: 600px;
+  height: 300px;
+  background: rgba(255,255,255,0.05);
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-sizing: border-box;
+  pointer-events: none;       /* placeholder */
+}
+   #load-screen h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-shadow: 0 0 8px #63a4ff;
+}
+    #load-screen p {
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+    #load-screen button {
+      background: #555;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    #canvas .node {
+  position: absolute;
+  z-index: 1;   /* above the svg-connections (which is z-index:0) */
+}
+
+#svg-connections {
+  overflow: visible;     /* ← let marker-ends draw outside the svg’s own bbox */
+}
+
+/* === SPLASH SCREEN === */
+#splash-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', cursive;
+  color: #63a4ff;
+  z-index: 2000;
+  text-align: center;
+}
+
+#splash-screen h1 {
+  font-size: 3rem;
+  margin: 0 0 1rem;
+  text-shadow: 0 0 8px #1a73e8;
+}
+
+#splash-screen p {
+  margin-bottom: 2rem;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+#splash-screen .splash-button {
+  font-family: inherit;
+  font-size: 1rem;
+  /* pick whatever width works best: */
+  width: 200px;               /* ← same for all buttons */
+  box-sizing: border-box;     /* include padding & border in width */
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem 0;           /* vertical spacing */
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #4a90e2;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;         /* center the label */
+  white-space: nowrap;        /* prevent wrapping */
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+#splash-screen button:hover {
+  background: #4a90e2;
+  transform: translateY(-2px);
+}
+#splash-screen, 
+#splash-screen * {
+  user-select: none;
+}
+@keyframes glow {
+  from { text-shadow: 0 0 8px #1a73e8; }
+  to   { text-shadow: 0 0 16px #63a4ff; }
+}
+#splash-screen h1,
+#splash-screen button {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+/* 3. “Back” button on main-app */
+#back-btn {
+  position: fixed;
+  top: 20px; left: 20px;
+  z-index: 1500;
+}
+#splash-screen #releases-btn {
+  font-family: inherit;
+  font-size: 1rem;
+  width: 200px;            /* ← same width for consistency */
+  box-sizing: border-box;   /* include padding & border inside that width */
+  padding: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  background: #63a4ff;
+  color: #1a1a1a;
+  border: 2px solid #1a73e8;
+  border-radius: 4px;
+  cursor: pointer;
+  animation: glow 2s ease-in-out infinite alternate;
+  user-select: none;
+  text-align: center;       /* center the label */
+  white-space: nowrap;      /* prevent wrapping */
+}
+
+  #splash-screen #releases-btn:hover {
+    background: #1a73e8;
+    transform: translateY(-2px);
+  }
+
+  /* the Releases screen: hidden by default */
+ #releases-screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  font-family: 'Arial', sans-serif;
+  color: #e0e0e0;
+  text-align: center;
+  z-index: 2000;
+
+  /* center content */
+ 
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  user-select: none;
+}
+
+ #releases-screen h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #63a4ff;
+  text-shadow: 0 0 8px #1a73e8;
+}
+.releases-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  width: 80%;
+  max-width: 1000px;
+  margin-bottom: 2rem;
+}
+  /* List of upcoming features */
+  .releases-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 2rem;
+  }
+  .releases-list li {
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+.release-card {
+  background: rgba(30, 30, 30, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.release-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+}
+
+/* Title inside card */
+.release-card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+  color: #4fc3f7;
+}
+
+/* Description text */
+.release-card p {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin: 0;
+  color: #ccc;
+}
+  /* Back button on Releases screen */
+  #releases-back-btn {
+      font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #63a4ff;
+  border-radius: 4px;
+  cursor: pointer;
+  animation: glow 2s ease-in-out infinite alternate;
+  user-select: none;
+  margin-top: 1rem;      /* match the Releases button spacing */
+  text-align: center;
+  white-space: nowrap;
+  }
+  #releases-back-btn:hover {
+    background: #63a4ff;
+    transform: translateY(-1px);
+  }
+.version-label {
+  position: fixed;
+  bottom: 20px;         /* match your bottom-bar’s vertical padding */
+  left: 20px;           /* match your bottom-bar’s horizontal padding */
+  background: rgba(50, 50, 50, 0.8);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 1000;        /* above everything else */
+  pointer-events: none; /* clicks pass through */
+}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
+      color: #fff;
+    }
+.selection-box {
+  position: absolute;
+  border: 1px dashed #fff;
+  background: rgba(255,255,255,0.2);
+  pointer-events: none;
+  z-index: 100;            /* above nodes/connectors */
+}
+    #bottom-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(50, 50, 50, 0.8);
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000; 
+     display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-button {
+    background: #555;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    margin: 2px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+}
+
+.control-button:hover {
+    background: #777;
+}
+  .edit-input {
+        background: linear-gradient(145deg, #1a1a1a, #333); /* Darker gradient for the top box */
+        color: #fff;
+        border: none;
+        padding: 15px 0;
+        margin: 0;
+        border-radius: 12px; /* Match node corners */
+        font-size: 16px;
+        outline: none;
+        width: 100%; /* Full width inside the node */
+        text-align: center; /* Center the text */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Depth similar to nodes */
+        transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease;
+        pointer-events: auto; /* Allow interaction */
+        z-index: 10; /* Ensure it is above other elements */
+    }
+
+  .edit-input:focus {
+        transform: scale(1.03); /* Subtle growth on focus */
+        background: linear-gradient(145deg, #2d2d2d, #444); /* Slightly brighter gradient for focus */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Deeper shadow for active state */
+        border: 1px solid #555; /* Slight border to indicate focus */
+    }
+
+.  .edit-input:hover {
+        background: linear-gradient(145deg, #333, #555); /* Slightly darker on hover */
+        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.35); /* More pronounced shadow */
+    }
+
+
+    .edit-input-bottom {
+        background: linear-gradient(145deg, #4a4a4a, #666); /* Lighter gradient for the bottom box */
+        color: #fff;
+        border: none;
+        padding: 15px 0;
+        margin: 0;
+        border-radius: 12px; /* Match node corners */
+        font-size: 16px;
+        outline: none;
+        width: 100%; /* Full width inside the node */
+        text-align: center; /* Center the text */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Depth similar to nodes */
+        transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease;
+        pointer-events: auto; /* Allow interaction */
+        z-index: 10; /* Ensure it is above other elements */
+    }
+
+
+
+    .button {
+      background: #555;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      margin: 2px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s ease;
+    }
+
+    .button:hover {
+      background: #777;
+    }
+
+    html, body {
+      overflow: hidden;
+      height: 100%;
+    }
+
+    #canvas {
+      width: 150vw;
+      height: 150vh;
+      position: relative;
+      padding-top: 0px;
+      overflow: hidden;
+      background: radial-gradient(#555 1px, transparent 1px);
+      background-size: 25px 25px;
+      background-repeat: repeat;
+      background-attachment: fixed;
+      box-shadow: 0 0 40px #555, inset 0 0 40px #555;
+      border: 2px solid #555;
+      margin: auto;
+      box-sizing: border-box;
+      transform-origin: center center;
+      transform: translate(0px, 0px) scale(1);
+    }
+
+.node {
+    background: linear-gradient(145deg, #2d8cf0, #63a4ff); /* Brighter blue gradient */
+    padding: 0 0 8px 0;
+    border-radius: 12px;
+    margin: 5px;
+    color: #fff;
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    min-width: 160px;
+}
+.node:hover {
+    transform: scale(1.05); /* Slightly grows the node */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Adds a more prominent shadow */
+}
+
+.node-title {
+    background: #1a73e8; /* Darker header color */
+    padding: 12px 0;
+    width: 100%; 
+    border-radius: 12px 12px 0 0; /* Rounded top corners only */
+    font-size: 18px;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+}
+
+.amount-box {
+    background: linear-gradient(145deg, #1a73e8, #4a90e2); /* Slightly darker blue */
+    padding: 15px 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 16px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Base Connector Styles */
+.connector {
+    width: 22px;
+    height: 22px;
+    background: #555;
+    border-radius: 50%;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5); /* Deeper shadow for both */
+}
+
+/* Hover Effect */
+.connector:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 7px rgba(0, 0, 0, 0.6); /* Enhanced shadow on hover */
+    cursor: pointer;
+}
+
+/* Top Connector: Socket Hole */
+/* Top Connector: Improved 3D Socket Look */
+.connector.top {
+    width: 28px;    /* More circular, less wide */
+    height: 18px;   /* Balanced height for a socket look */
+    top: -10px;     /* Positioned closer to the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle at center, #333 20%, #111 80%);
+    border-radius: 50%;  /* Circular look */
+    border: 2px solid #111;
+    box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.4); /* Deeper, rounded shadow */
+    position: absolute;
+}
+
+/* Inner Rim for 3D Depth */
+.connector.top::before {
+    content: "";
+    width: 15px;
+    height: 10px;
+    background: radial-gradient(circle at center, #555 40%, #222 90%);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.5); /* Inner concave shadow */
+}
+
+/* Interactive Shadow Effect */
+.connector.top:hover {
+    background: radial-gradient(circle at center, #444 30%, #222 70%);
+    box-shadow: inset 0 6px 8px rgba(0, 0, 0, 0.8), 0 4px 6px rgba(0, 0, 0, 0.5); /* Enhanced 3D effect on hover */
+    transform: translateX(-50%) scale(1.05); /* Slight expansion on hover */
+}
+
+
+/* Bottom Connector: Arrow Shape */
+.connector.bottom {
+    bottom: -15px; /* Move closer to the bottom edge */
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle at center, #555 25%, #333 90%);
+    border: 2px solid #000; /* Same outline as top connector */
+}
+
+/* Arrow Symbol */
+.connector.bottom:before {
+    content: "↓"; /* Downward arrow */
+    font-size: 16px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); /* Soft shadow for clarity */
+}
+
+/* Connector Shadow Effect */
+.connector.shadow {
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5); /* Default shadow */
+}
+
+/* Income Connectors */
+.income-node .connector {
+    background: #28a745;
+    box-shadow: 0 3px 5px rgba(0, 128, 0, 0.4); /* Soft green glow */
+}
+
+.income-node .connector:hover {
+    background: #218838;
+    box-shadow: 0 5px 7px rgba(0, 128, 0, 0.6);
+}
+
+/* Expense Connectors */
+.expense-node .connector {
+    background: #e57373;
+    box-shadow: 0 3px 5px rgba(128, 0, 0, 0.4); /* Soft red glow */
+}
+
+.expense-node .connector:hover {
+    background: #d32f2f;
+    box-shadow: 0 5px 7px rgba(128, 0, 0, 0.6);
+}
+
+/* Balance Connectors */
+.balance-node .connector {
+    background: #2196f3;
+    box-shadow: 0 3px 5px rgba(0, 0, 128, 0.4); /* Soft blue glow */
+}
+
+.balance-node .connector:hover {
+    background: #1976d2;
+    box-shadow: 0 5px 7px rgba(0, 0, 128, 0.6);
+}
+
+
+.connection-line {
+    stroke: #63a4ff;                /* Line color */
+    stroke-width: 4;                /* Line thickness */
+    stroke-dasharray: 8, 4;         /* Dashed line pattern */
+    fill: none;
+    marker-end: url(#arrowhead);    /* Attach the new arrowhead */
+    stroke-linecap: round;          /* Rounded ends */
+    stroke-linejoin: round;         /* Smooth curves */
+    opacity: 0.85;                  /* Slight transparency */
+    filter: drop-shadow(0 0 6px #1a73e8); /* Soft glow effect */
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+.connection-line:hover {
+    stroke-width: 5;                /* Thicker on hover */
+    opacity: 1.0;                   /* Full opacity on hover */
+    stroke-dasharray: 0;            /* Solid line on hover */
+    filter: drop-shadow(0 0 12px #63a4ff); /* Stronger glow on hover */
+}
+
+
+
+
+svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.label {
+    background: linear-gradient(135deg, #1a73e8, #4a90e2);
+    padding: 10px 20px;
+    border-radius: 20px 20px 0 0;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
+.value-box {
+    background: linear-gradient(135deg, #4a90e2, #6ea2f0);
+    padding: 8px 16px;
+    border-radius: 0 0 20px 20px;
+    margin-top: -5px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
+
+    .options-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #444;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  opacity: 0;                     /* start hidden */
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+    .options-icon:hover {
+      background: #666;
+    }
+
+    .node:hover .options-icon {
+      opacity: 1;
+    }
+
+    .popup {
+      position: absolute;
+      background: #333;
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      display: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      top: -40px;
+      left: 100%;
+      white-space: nowrap;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .popup.show {
+      display: block;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+      #zoom-slider {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      background: #333;
+      color: #fff;
+      padding: 5px;
+      border-radius: 5px;
+    }
+.node .label {
+    background: #1a73e8;
+    padding: 5px 10px;
+    border-radius: 20px 20px 0 0;
+    margin-bottom: -5px;
+    font-size: 14px;
+}
+
+.node .value {
+    background: #4a90e2;
+    padding: 5px 10px;
+    border-radius: 0 0 20px 20px;
+    font-size: 14px;
+}
+    #zoom-slider input[type=range] {
+      width: 150px;
+    }
+
+   .balance-node {
+    background: linear-gradient(145deg, #4d8fac, #6bb0d6); /* Soft blue-teal gradient */
+    padding: 0 0 8px 0;
+    border-radius: 12px;
+    margin: 5px;
+    color: #fff;
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    min-width: 180px;
+}
+
+.balance-node:hover {
+    transform: scale(1.08); /* Slightly grows the node */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* More prominent shadow */
+}
+
+.balance-node .node-title {
+    background: #326a8c; /* Darker blue for the title */
+    font-size: 22px; /* Larger title font size */
+    color: #ffffff;
+}
+
+.balance-node .amount-box {
+    background: linear-gradient(145deg, #6bb0d6, #4d8fac); /* Soft blue gradient for the amount box */
+    padding: 15px 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 18px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.income-node {
+    background: linear-gradient(145deg, #28a745, #50c878); /* Green gradient */
+    padding: 0 0 8px 0;
+    border-radius: 12px;
+    margin: 5px;
+    color: #fff;
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3); /* Slightly deeper shadow */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px; /* Make it bigger */
+    font-weight: bold;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    min-width: 180px; /* Make it wider */
+}
+
+.income-node:hover {
+    transform: scale(1.08); /* Slightly grows the node */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* More prominent shadow */
+}
+
+.income-node .node-title {
+    background: #218838; /* Darker green header */
+    font-size: 22px; /* Larger title font size */
+    color: #ffffff;
+}
+.income-node .amount-box {
+    background: linear-gradient(145deg, #218838, #50c878); /* Green gradient */
+    padding: 15px 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 18px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.expense-node {
+    background: linear-gradient(145deg, #ff6f61, #ff4c4c); /* Soft, bright red gradient */
+    padding: 0 0 8px 0;
+    border-radius: 12px;
+    margin: 5px;
+    color: #fff;
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px; /* Bigger font for emphasis */
+    font-weight: bold;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    min-width: 180px;
+}
+
+.expense-node:hover {
+    transform: scale(1.08); /* Slightly grows the node */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* More prominent shadow */
+}
+
+.expense-node .node-title {
+    background: #d32f2f; /* Clearly darker, deeper red for header */
+    font-size: 22px; /* Larger title font size */
+    color: #ffffff;
+}
+
+.expense-node .amount-box {
+    background: linear-gradient(145deg, #ff4c4c, #ff6f61); /* Soft red gradient for the amount box */
+    padding: 15px 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 18px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+ .selected-node {
+    border: 2px solid #63a4ff;
+    box-shadow: 0 0 10px #63a4ff;
+    transform: scale(1.05) !important;
+  }
+/* our new little circle: */
+.fab-button {
+  background: rgba(50, 50, 50, 0.8);  /* same as bottom‐bar */
+  color: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+/* --------------------- */
+/*  NAME SCREEN & INPUT  */
+/* --------------------- */
+#name-screen {
+  display: none;
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg,#1a1a1a,#2d2d2d);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Press Start 2P',cursive;
+  color: #63a4ff; text-align: center;
+  user-select: none;
+  z-index: 2000;
+}
+#name-screen h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 8px #1a73e8;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+#budget-name-input {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  width: 280px;
+  max-width: 80%;
+  border: 2px solid #4a90e2;
+  border-radius: 5px;
+  margin-bottom: 1.5rem;
+  background: #1a1a1a;
+  color: #fff;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+#budget-name-input:focus {
+  border-color: #63a4ff;
+}
+#name-continue-btn {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #4a90e2;
+  border-radius: 4px;
+  cursor: pointer;
+  animation: glow 2s ease-in-out infinite alternate;
+  transition: background 0.2s, transform 0.2s;
+}
+#name-continue-btn:hover {
+  background: #4a90e2;
+  transform: translateY(-2px);
+}
+
+/* --------------------- */
+/*  BUDGET TITLE DISPLAY */
+/* --------------------- */
+.budget-title {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1.25rem;
+  color: #63a4ff;
+  text-shadow: 0 0 6px #1a73e8;
+  
+  background: rgba(0,0,0,0.4);   /* semi-transparent backdrop */
+  padding: 6px 12px;
+  border-radius: 6px;
+  
+  z-index: 2000;                 /* above nodes & SVG */
+  pointer-events: none;          /* clicks go through */
+  user-select: none;
+}
+
+#load-back-btn {
+   font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #63a4ff;
+  border-radius: 4px;
+  cursor: pointer;
+  animation: glow 2s ease-in-out infinite alternate;
+  user-select: none;
+  margin-top: 1rem;      /* match the Releases button spacing */
+  text-align: center;
+  white-space: nowrap;
+}
+
+#load-back-btn:hover {
+  background: #4a90e2;
+  transform: translateY(-2px);
+}
+
+.fab-button:hover {
+  background: rgba(70, 70, 70, 0.9);
+}
+
+/* ----- inside your <style> ----- */
+
+/* make the container allow interaction once we add cards */
+#load-container {
+  /* keep those breathing-room paddings */
+  padding: 2rem;
+
+  /* now stack cards in a column, centered horizontally */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  /* pin them to the top, not the middle */
+  justify-content: flex-start;
+
+  /* if you get more than one, they’ll flow downward with space */
+  gap: 1rem;
+
+  /* your existing dimensions & styling */
+  width: 80%;
+  max-width: 600px;
+  height: 300px;
+  background: rgba(255,255,255,0.05);
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin-bottom: 2rem;
+
+  /* tell the card itself to receive clicks */
+  pointer-events: auto;
+}
+
+
+/* a placeholder card for a saved budget */
+.saved-budget-card {
+  position: relative;
+  width: 550px;        /* or whatever max-width you like */
+  min-height: 80px;    /* collapse vertically if content is small */
+  padding: 1rem;       /* room inside the card */
+  background: rgba(30,30,30,0.8);
+  border: 2px solid #63a4ff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* budget name bubble */
+.saved-budget-name {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+/* last-saved date bubble */
+.saved-budget-date {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  color: #fff;
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+  </style>
+</head>
+<body>
+ <div id="name-screen">
+  <h1>What shall we call this budget?</h1>
+  <input type="text" id="budget-name-input" maxlength="30"
+         placeholder="e.g. Sunshine Savings" />
+  <button id="name-continue-btn">Continue ›</button>
+</div>
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen">
+    <h1>Finance Tracker</h1>
+    <p>v1.0.0</p>
+    <button id="enter-btn" class="splash-button">Create New</button>
+    <button id="load-btn"  class="splash-button">Load</button> 
+    <button id="releases-btn">Upcoming Releases</button>
+  </div>
+  
+  <div id="load-screen">
+  <h1>Reawaken Your Budget</h1>
+  <div id="load-container" class="transparent-box">
+      <div class="saved-budget-card">
+    <div class="saved-budget-name">Sunshine Savings</div>
+    <div class="saved-budget-date">Last saved: 2025-05-16</div>
+  </div>
+    <!-- you can duplicate the .saved-budget-card block for each saved budget -->
+  </div>
+  <button id="load-back-btn" class="control-button">Back</button>
+</div>
+
+
+  <div id="releases-screen">
+  <h1>Upcoming Releases</h1>
+
+  <div class="releases-container">
+    <!-- 1 -->
+    <div class="release-card">
+      <h2>Debt Payoff Progress</h2>
+      <p>
+        Track your debt reduction with a live progress bar, so you can see
+        how close you are to financial freedom.
+      </p>
+    </div>
+
+    <!-- 2 -->
+    <div class="release-card">
+      <h2>Budget Save & Load</h2>
+      <p>
+        Save your budget configuration and load it across devices—never rebuild
+        your setup again.
+      </p>
+    </div>
+
+    <!-- 3: updated -->
+    <div class="release-card">
+      <h2>Desktop App Download</h2>
+      <p>
+        Finance Tracker is now available as a native desktop application
+        for Windows and Mac—budget on or offline, straight from your dock.
+      </p>
+    </div>
+
+    <!-- 4: updated -->
+    <div class="release-card">
+      <h2>Visual Allocation Charts</h2>
+      <p>
+        New visual “money disbursement” layouts let you see exactly where
+        every dollar is headed—pie charts, bar graphs, and more.
+      </p>
+    </div>
+
+    <!-- 5 -->
+    <div class="release-card">
+      <h2>UI Redesign</h2>
+      <p>
+        A fresh, modern interface with dark mode improvements, new color
+        themes, and quicker workflows.
+      </p>
+    </div>
+  </div>
+
+  <button id="releases-back-btn">Back</button>
+</div>
+
+  <!-- MAIN APP (hidden until splash is dismissed) -->
+ <div id="main-app" style="display:none;">
+  <!-- budget title goes here -->
+  
+    <!-- Back to splash -->
+    <button id="back-btn" class="control-button">Back</button>
+    <!-- your existing bottom-bar, canvas, zoom-slider, etc. -->
+    
+    <div class="version-label">FinanceTracker V1.0.7</div>
+    <div id="canvas"></div>
+    <h2 id="budget-title" class="budget-title"></h2>
+    <div id="zoom-slider">…</div>
+ <div id="bottom-bar">
+   <button class="fab-button">+</button>
+    <button class="control-button" onclick="addNode('Income', false)">Add Income</button>
+    <button class="control-button" onclick="addNode('Expense', true)">Add Expense</button>
+    <button class="control-button" onclick="addBalanceNode()">Add Balance Node</button>
+    <button class="control-button" onclick="showRowansExpense()">Rowan's Expense</button>
+    
+  </div>
+<div class="version-label">FinanceTracker V1.0.7</div>
+ <div id="canvas" style="overflow:visible; position:relative;">
+   
+  <svg
+    id="svg-connections"
+    style="position:absolute; top:0; left:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:0;"
+  >
+    <defs>…</defs>
+  </svg>
+  <!-- nodes… -->
+</div>
+ 
+ <div id="zoom-slider">
+    Zoom: <input type="range" min="0.7" max="1.6" step="0.05" value="1" id="zoomControl">
+    <button onclick="resetZoom()">Reset</button>
+  </div>
+
+  <script>
+
+    let isMultiSelecting    = false;
+let selectionBox        = null;
+let multiSelectedNodes  = [];
+let initialPos = null;
+
+    let connections = [];  // Store connections between nodes
+
+    let translateX = 0, translateY = 0;
+    let isDraggingCanvas = false, isDraggingNode = false;
+    let startX, startY, nodeOffsetX, nodeOffsetY;
+
+      const canvas = document.getElementById('canvas');
+
+  // 1) Start marquee on Shift + mousedown outside any node
+  // 1) SINGLE mousedown handler for marquee + pan
+ canvas.addEventListener('mousedown', e => {
+  const hitNode      = !!e.target.closest('.node');
+  const hitConnector = e.target.classList.contains('connector');
+
+  // ── if you clicked on a connector, let the connector‐drag logic handle it ──
+  if (hitConnector) return;
+
+  // — CLICK ON BLANK (no node, no connector), and NOT holding SHIFT
+  if (!e.shiftKey && !hitNode) {
+    multiSelectedNodes.forEach(n => n.classList.remove('selected-node'));
+    multiSelectedNodes = [];
+  }
+
+  // — SHIFT + click on blank canvas ⇒ start marquee
+ if (e.shiftKey && !hitNode) {
+  // remember where we started
+  initialPos = { x: e.clientX, y: e.clientY };
+
+  // wait until you’ve actually dragged before making the box
+  document.addEventListener('mousemove', initMarquee);
+  document.addEventListener('mouseup',   cleanupMarquee);
+  e.preventDefault(); // cancel the normal pan
+  return;
+}
+
+
+  // — if we’re in the middle of a marquee, do nothing
+  if (isMultiSelecting) return;
+
+  // — otherwise: start pan
+  startX = (e.clientX - translateX) / scale;
+  startY = (e.clientY - translateY) / scale;
+  isDraggingCanvas = true;
+});
+
+
+  // marquee move/up
+  function onMultiMove(e) {
+    const x = Math.min(e.clientX, selectionBox._sx),
+          y = Math.min(e.clientY, selectionBox._sy),
+          w = Math.abs(e.clientX - selectionBox._sx),
+          h = Math.abs(e.clientY - selectionBox._sy);
+    Object.assign(selectionBox.style, { left:`${x}px`, top:`${y}px`, width:`${w}px`, height:`${h}px` });
+  }
+function onMultiUp(e) {
+  // stop listening
+  document.removeEventListener('mousemove', onMultiMove);
+  document.removeEventListener('mouseup',   onMultiUp);
+
+  // if we never actually created a marquee, just bail
+  if (!selectionBox) return;
+
+  // compute its size & position
+  const box = selectionBox.getBoundingClientRect();
+
+  // if it’s effectively a click (no real drag), wipe it and exit
+  if (box.width < 5 && box.height < 5) {
+    selectionBox.remove();
+    selectionBox = null;
+    isMultiSelecting = false;
+    return;
+  }
+
+  // otherwise, do the marquee hit‐test
+  multiSelectedNodes = [];
+  document.querySelectorAll('.node').forEach(node => {
+    const r = node.getBoundingClientRect();
+    const hit = !(r.right < box.left || r.left > box.right || r.bottom < box.top || r.top > box.bottom);
+    node.classList.toggle('selected-node', hit);
+    if (hit) multiSelectedNodes.push(node);
+  });
+
+  // clean up the marquee
+  selectionBox.remove();
+  selectionBox = null;
+  isMultiSelecting = false;
+}
+
+
+  // 2) group‐drag helper (call this *once* per node)
+ function attachGroupDrag(node) {
+  node.addEventListener('mousedown', e => {
+    if (e.target.closest('.connector') || isMultiSelecting) return;
+    // map pointer into canvas‐space
+    const cR     = canvas.getBoundingClientRect();
+    const startX = (e.clientX - cR.left) / scale;
+    const startY = (e.clientY - cR.top)  / scale;
+
+    // set up each node’s grab offset
+    const drags = multiSelectedNodes.map(n => {
+      const nx = parseFloat(n.style.left) || 0;
+      const ny = parseFloat(n.style.top)  || 0;
+      return { n, dx: startX - nx, dy: startY - ny };
+    });
+
+    function onDrag(ev) {
+      const mx = (ev.clientX - cR.left) / scale;
+      const my = (ev.clientY - cR.top)  / scale;
+      drags.forEach(d => {
+        d.n.style.left = (mx - d.dx) + 'px';
+        d.n.style.top  = (my - d.dy) + 'px';
+      });
+      updateConnections();
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup',   onUp);
+    }
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup',   onUp);
+    e.stopPropagation();
+  });
+}
+
+ const zoomControl = document.getElementById('zoomControl');
+    zoomControl.addEventListener('input', (event) => {
+      scale = parseFloat(event.target.value);
+      updateCanvasTransform();
+    });
+  function resetZoom() {
+      translateX = 0;
+      translateY = 0;
+      scale = 1;
+      zoomControl.value = 1;
+      updateCanvasTransform();
+    }
+ 
+  function updateCanvasTransform() {
+  const transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  document
+    .getElementById('canvas')
+    .style.transform = transform;
+
+  document
+    .getElementById('svg-connections')
+    .style.transform       = transform;
+  document
+    .getElementById('svg-connections')
+    .style.transformOrigin = '0 0';
+
+  updateConnections();
+}
+
+
+
+
+  function addNode(type, hasTopConnector) {
+  const node = document.createElement('div');
+node.className = 'node';
+if (type === 'Income') {
+    node.classList.add('income-node');
+} else if (type === 'Expense') {
+    node.classList.add('expense-node');
+}
+const optionsIcon = document.createElement('div');
+optionsIcon.className = 'options-icon';
+optionsIcon.textContent = '⋮';
+optionsIcon.onclick = (e) => {
+    e.stopPropagation();
+    toggleMenu(node, optionsIcon);
+};
+node.appendChild(optionsIcon);
+
+
+    // Node Title
+    const title = document.createElement('div');
+    title.className = 'node-title';
+    title.textContent = type;
+
+    // Amount Box
+    const amountBox = document.createElement('div');
+    amountBox.className = 'amount-box';
+    amountBox.textContent = '$0.00'; // Placeholder value
+
+    // Conditionally add the top connector based on the parameter
+    if (hasTopConnector) {
+        const topConnector = document.createElement('div');
+        topConnector.className = 'connector top';
+        node.appendChild(topConnector);
+    }
+
+    // Bottom Connector (always present)
+    const bottomConnector = document.createElement('div');
+    bottomConnector.className = 'connector bottom';
+
+    node.appendChild(title);
+    node.appendChild(amountBox);
+    node.appendChild(bottomConnector);
+    canvas.appendChild(node);
+
+    // Calculate the actual center of the visible viewport in relation to the canvas
+    const viewportCenterX = window.innerWidth / 2;
+    const viewportCenterY = window.innerHeight / 2;
+
+    // Adjust the center position to take into account the current translation and scale
+    const canvasRect = canvas.getBoundingClientRect();
+    const centerX = (viewportCenterX - canvasRect.left) / scale;
+    const centerY = (viewportCenterY - canvasRect.top) / scale;
+
+    // Set the node position at the calculated center of the visible viewport
+    node.style.left = `${centerX}px`;
+    node.style.top = `${centerY}px`;
+
+    // Make the node draggable
+    // Make the node draggable (Regular Node)
+node.addEventListener('mousedown', function(e) {
+  if (e.target.classList.contains('connector')) return;
+  // 1) map pointer into canvas‐space
+  const cR    = canvas.getBoundingClientRect();
+  const startX = (e.clientX - cR.left) / scale;
+  const startY = (e.clientY - cR.top)  / scale;
+
+  // 2) read node’s current coords
+  const nodeX = parseFloat(node.style.left) || 0;
+  const nodeY = parseFloat(node.style.top)  || 0;
+
+  // 3) compute cursor→node offset
+  const offsetX = startX - nodeX;
+  const offsetY = startY - nodeY;
+
+  function onMouseMove(ev) {
+    // recalc pointer in canvas-space
+    const mx = (ev.clientX - cR.left) / scale;
+    const my = (ev.clientY - cR.top)  / scale;
+    // re-position so the grab point sticks
+    node.style.left = (mx - offsetX) + 'px';
+    node.style.top  = (my - offsetY) + 'px';
+    updateConnections();
+  }
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup',   onMouseUp);
+  }
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup',   onMouseUp);
+  e.stopPropagation();
+});
+
+
+
+    canvas.appendChild(node);
+    attachGroupDrag(node)
+}
+
+
+
+
+
+
+
+
+  function toggleMenu(node, icon) {
+  let popup = icon.querySelector('.popup');
+  let closeTimer;
+
+  // shared close logic
+  function closeMenu() {
+    icon.classList.remove('open');
+    popup.classList.remove('show');
+
+    // after fade
+    setTimeout(() => {
+      if (popup.parentNode) popup.remove();
+    }, 300);
+
+    icon.removeEventListener('mouseleave', onIconLeave);
+    icon.removeEventListener('mouseenter', onIconEnter);
+    popup.removeEventListener('mouseleave', onPopupLeave);
+    popup.removeEventListener('mouseenter', onPopupEnter);
+  }
+
+  // when cursor leaves icon
+  function onIconLeave() {
+    // start 1.5s countdown
+    closeTimer = setTimeout(closeMenu, 500);
+  }
+  function onIconEnter() {
+    // cancel closing if they come back
+    clearTimeout(closeTimer);
+  }
+
+  // same for the popup itself
+  function onPopupLeave() { closeTimer = setTimeout(closeMenu, 1500); }
+  function onPopupEnter() { clearTimeout(closeTimer); }
+
+  if (popup) {
+    // already open → close immediately
+    clearTimeout(closeTimer);
+    closeMenu();
+  } else {
+    // create & open
+    icon.classList.add('open');
+
+    popup = document.createElement('div');
+    popup.className = 'popup show';
+    popup.innerHTML = `
+      <button onclick='startRename(this)'>Edit</button>
+      <button onclick='copyNode(this)'>Copy</button>
+      <button onclick='deleteNode(this)'>Delete</button>`;
+    icon.appendChild(popup);
+
+    // wire up hover watchers
+    icon.addEventListener('mouseleave', onIconLeave);
+    icon.addEventListener('mouseenter', onIconEnter);
+    popup.addEventListener('mouseleave', onPopupLeave);
+    popup.addEventListener('mouseenter', onPopupEnter);
+  }
+}
+
+
+
+
+ function startRename(button) {
+    const node = button.closest('.node');
+
+    // Disable connectors during editing
+    const connectors = node.querySelectorAll('.connector');
+    connectors.forEach(connector => {
+        connector.style.pointerEvents = 'none';
+        connector.style.opacity = '0.3'; // Make them look inactive
+    });
+const ellipsisIcon = node.querySelector('.options-icon');
+if (ellipsisIcon) {
+    ellipsisIcon.style.pointerEvents = 'none';
+    ellipsisIcon.style.opacity = '0.3'; // Make it look inactive
+}
+    // Get title and amount elements
+    const titleElement = node.querySelector('.node-title');
+    const amountElement = node.querySelector('.amount-box');
+
+    // Detect the node type by checking the class directly
+    const isIncomeNode = node.classList.contains('income-node');
+    const isExpenseNode = node.classList.contains('expense-node');
+    const isBalanceNode = node.classList.contains('balance-node');
+
+    // Determine the appropriate background colors for the edit input
+    let titleBackground, amountBackground;
+    if (isIncomeNode) {
+        titleBackground = 'linear-gradient(145deg, #218838, #28a745)';
+        amountBackground = 'linear-gradient(145deg, #50c878, #28a745)';
+    } else if (isExpenseNode) {
+        titleBackground = 'linear-gradient(145deg, #d32f2f, #ff4c4c)';
+        amountBackground = 'linear-gradient(145deg, #ff6f61, #ff4c4c)';
+    } else if (isBalanceNode) {
+        titleBackground = 'linear-gradient(145deg, #326a8c, #1a73e8)';
+        amountBackground = 'linear-gradient(145deg, #4a90e2, #1a73e8)';
+    } else {
+        titleBackground = 'linear-gradient(145deg, #2d8cf0, #63a4ff)';
+        amountBackground = 'linear-gradient(145deg, #4a90e2, #63a4ff)';
+    }
+
+    // Create input fields for editing the title
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = titleElement.textContent;
+    titleInput.className = 'edit-input';
+    titleInput.style.width = '100%';
+    titleInput.style.fontWeight = 'bold';
+    titleInput.style.textAlign = 'center';
+    titleInput.style.background = titleBackground;
+
+    // Replace the title element with the input field
+    titleElement.replaceWith(titleInput);
+
+    // Create an amount input only if the node is not a balance node
+    let amountInput;
+    if (!isBalanceNode) {
+        amountInput = document.createElement('input');
+        amountInput.type = 'text';
+        amountInput.value = amountElement.textContent.replace('$', '');
+        amountInput.className = 'edit-input';
+        amountInput.style.width = '100%';
+        amountInput.style.textAlign = 'center';
+        amountInput.style.background = amountBackground;
+
+        // Replace the amount element with the input field
+        amountElement.replaceWith(amountInput);
+    }
+
+    // Format number as a dollar amount
+    function formatDollar(value) {
+        let number = parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
+        return `$${number.toFixed(2)}`;
+    }
+
+    // Save changes and re-enable connectors
+    function saveChanges() {
+        titleElement.textContent = titleInput.value || 'Untitled';
+
+        if (!isBalanceNode && amountInput) {
+            amountElement.textContent = formatDollar(amountInput.value);
+            amountInput.replaceWith(amountElement);
+        }
+
+        // Replace title input with the original title element
+        titleInput.replaceWith(titleElement);
+
+        // Re-enable connectors after editing
+        connectors.forEach(connector => {
+            connector.style.pointerEvents = 'auto';
+            connector.style.opacity = '1'; // Reset opacity
+        });
+  connectors.forEach(connector => {
+      connector.style.pointerEvents = 'auto';
+      connector.style.opacity       = '1';
+    });
+
+    // 2) **re-enable the ellipsis icon** (so your ⋮ menu works again)
+    if (ellipsisIcon) {
+      ellipsisIcon.style.pointerEvents = 'auto';
+      ellipsisIcon.style.opacity       = '1';
+    }
+        // Update balances after editing
+        updateAllBalances();
+    }
+
+    // Handle clicking outside to save changes
+    function handleClickOutside(e) {
+        if (!node.contains(e.target)) {
+            saveChanges();
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }
+
+    // Prevent immediate save when clicking inside the input
+    function preventImmediateSave(e) {
+        e.stopPropagation();
+    }
+
+    // Event listeners for title input
+    titleInput.addEventListener('mousedown', preventImmediateSave);
+    titleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveChanges();
+    });
+
+    // Event listeners for amount input (only if not a balance node)
+    if (amountInput) {
+        amountInput.addEventListener('mousedown', preventImmediateSave);
+        amountInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') saveChanges();
+        });
+    }
+
+    // Allow clicking inside inputs without triggering save
+    titleInput.addEventListener('click', (e) => e.stopPropagation());
+    if (amountInput) amountInput.addEventListener('click', (e) => e.stopPropagation());
+
+    // Add the event listener after a small delay to avoid immediate trigger
+    setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+    }, 50);
+
+    // Set focus on the title input field initially
+    setTimeout(() => titleInput.focus(), 0);
+}
+
+
+
+
+ function copyNode(button) {
+  const original = button.closest('.node');
+  const canvas   = document.getElementById('canvas');
+  const isBalance= original.classList.contains('balance-node');
+  const title    = original.querySelector('.node-title').textContent;
+  const amount   = original.querySelector('.amount-box').textContent;
+
+  // 1) Create a fresh node of the same type
+  if (isBalance) {
+    addBalanceNode();
+  } else {
+    const isExpense = original.classList.contains('expense-node');
+    addNode(isExpense ? 'Expense' : 'Income', isExpense);
+  }
+
+  // 2) Grab the newly created node
+  const clone = canvas.lastElementChild;
+
+  // 3) Copy title & amount text
+  clone.querySelector('.node-title').textContent = title;
+  clone.querySelector('.amount-box').textContent = amount;
+
+  // 4) Position it offset from the original
+  const oR = original.getBoundingClientRect();
+  const cR = canvas.getBoundingClientRect();
+  const dx = 30, dy = 30;
+  clone.style.left = `${(oR.left - cR.left)/scale + dx}px`;
+  clone.style.top  = `${(oR.top  - cR.top )/scale + dy}px`;
+
+  // 5) Recalculate balances (your new balance node already has calculateBalance)
+  updateAllBalances();
+}
+
+
+
+
+
+
+
+
+    function deleteNode(button) {
+    const node = button.closest('.node');
+
+    // Find and remove all connections associated with this node
+    connections = connections.filter((conn) => {
+        if (conn.fromNode === node || conn.toNode === node) {
+            // Remove the connection line from the SVG
+            if (conn.line) {
+                conn.line.remove();
+            }
+            return false; // Remove from the connections array
+        }
+        return true;
+    });
+
+    // Remove the node from the canvas
+    node.remove();
+
+    // Update balances to reflect the removal
+    updateAllBalances();
+}
+
+
+// Dragging functionality for the canvas
+// Dragging functionality for the canvas
+// Dragging functionality for the canvas
+canvas.addEventListener('mousedown', e => {
+  const hitNode      = !!e.target.closest('.node');
+  const hitConnector = e.target.classList.contains('connector');
+
+  // ── 0) if you clicked on a connector, let the connector‐drag handler take over ──
+  if (hitConnector) return;
+
+  // ── 1) clear selection if you click empty (without Shift) ──
+  if (!e.shiftKey && !hitNode) {
+    multiSelectedNodes.forEach(n => n.classList.remove('selected-node'));
+    multiSelectedNodes = [];
+  }
+
+  // ── 2) SHIFT+click empty ⇒ start marquee ──
+ if (e.shiftKey && !hitNode) {
+  // remember where we started
+  initialPos = { x: e.clientX, y: e.clientY };
+
+  // wait until you’ve actually dragged before making the box
+  document.addEventListener('mousemove', initMarquee);
+  document.addEventListener('mouseup',   cleanupMarquee);
+  e.preventDefault(); // cancel the normal pan
+  return;
+}
+
+
+  // ── 3) if marquee is active, do nothing here ──
+  if (isMultiSelecting) return;
+
+  // ── 4) otherwise start panning the canvas ──
+  isDraggingCanvas = true;
+  startX = (e.clientX - translateX) / scale;
+  startY = (e.clientY - translateY) / scale;
+});
+
+
+
+canvas.addEventListener('mousemove', (e) => {
+    if (isDraggingCanvas) {
+        // Calculate new translation based on mouse movement and scale
+        let newTranslateX = e.clientX - startX * scale;
+        let newTranslateY = e.clientY - startY * scale;
+
+        // Clamp the translation values
+        const canvasWidth = canvas.offsetWidth * scale;
+        const canvasHeight = canvas.offsetHeight * scale;
+        const borderBuffer = 800;
+
+        const minX = window.innerWidth - canvasWidth - borderBuffer;
+        const maxX = borderBuffer;
+        const minY = window.innerHeight - canvasHeight - borderBuffer;
+        const maxY = borderBuffer;
+
+        newTranslateX = Math.min(Math.max(newTranslateX, minX), maxX);
+        newTranslateY = Math.min(Math.max(newTranslateY, minY), maxY);
+
+        // Update global translation variables
+        translateX = newTranslateX;
+        translateY = newTranslateY;
+
+        // Apply the transformation
+        canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+        // Update the position of all connection lines
+        updateConnections();
+    }
+});
+
+
+
+canvas.addEventListener('mouseup', () => {
+  isDraggingCanvas = false;
+});
+
+canvas.addEventListener('mouseleave', () => {
+  isDraggingCanvas = false;
+});
+
+
+
+
+
+let scale = 1;
+const minScale = 0.7;
+const maxScale = 1.6;
+const zoomSpeed = 0.05;
+
+// Smooth zoom based on viewport center (like the slider)
+canvas.addEventListener('wheel', (event) => {
+  event.preventDefault();
+
+  const centerX = window.innerWidth  / 2;
+  const centerY = window.innerHeight / 2;
+  const delta   = Math.sign(event.deltaY) * -1;
+  const newScale = scale * (1 + delta * zoomSpeed);
+  if (newScale < minScale || newScale > maxScale) return;
+
+  // recalc translate so zoom stays centered
+  const originX = (centerX - translateX) / scale;
+  const originY = (centerY - translateY) / scale;
+  translateX = centerX - originX * newScale;
+  translateY = centerY - originY * newScale;
+
+  scale = newScale;
+  zoomControl.value = scale;
+
+  // delegate to your shared updater
+  updateCanvasTransform();
+});
+
+
+
+// Sync zoom slider with zoom level
+zoomControl.addEventListener('input', (event) => {
+  const newScale = parseFloat(event.target.value);
+
+  // preserve center
+  const centerX = window.innerWidth  / 2;
+  const centerY = window.innerHeight / 2;
+  translateX = centerX - (centerX - translateX) * (newScale / scale);
+  translateY = centerY - (centerY - translateY) * (newScale / scale);
+
+  scale = newScale;
+  updateCanvasTransform();
+});
+
+
+// Sync zoom slider with zoom level
+zoomControl.addEventListener('input', (event) => {
+  const newScale = parseFloat(event.target.value);
+
+  // preserve center
+  const centerX = window.innerWidth  / 2;
+  const centerY = window.innerHeight / 2;
+  translateX = centerX - (centerX - translateX) * (newScale / scale);
+  translateY = centerY - (centerY - translateY) * (newScale / scale);
+
+  scale = newScale;
+  updateCanvasTransform();
+});
+// ———————————————————————————————————————————————
+// Connection state
+let tempLine = null;
+let startConn = null;
+
+// Helper: Get a connector’s center in SVG coords
+function getConnectorCenter(conn) {
+  const svg = document.getElementById('svg-connections');
+  const rect = conn.getBoundingClientRect();
+  const pt = svg.createSVGPoint();
+  pt.x = rect.left + rect.width / 2;
+  pt.y = rect.top + rect.height / 2;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+// Start a new curved path when mousedown on bottom connector
+document.addEventListener('mousedown', (e) => {
+  const c = e.target;
+  // Check if the clicked element is a bottom connector
+  if (c.classList.contains('connector') && c.classList.contains('bottom')) {
+    // Stop event from propagating to node dragging
+    e.stopPropagation();
+    e.preventDefault();
+
+    startConn = c;
+    const svg = document.getElementById('svg-connections');
+    
+    // Create a curved path instead of a line
+    tempLine = createCurve();
+    
+    // Set initial position of the line to the connector's center
+    const p = getConnectorCenter(startConn);
+    const pathData = createCurvePath(p.x, p.y, p.x, p.y);
+    tempLine.setAttribute('d', pathData);
+
+    // Track mouse movement
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+});
+
+
+function onMouseMove(e) {
+    if (!tempLine) return;
+
+    const svg = document.getElementById('svg-connections');
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    // Update the curved path instead of a straight line
+    const fromPos = getConnectorCenter(startConn);
+    const pathData = createCurvePath(fromPos.x, fromPos.y, loc.x, loc.y);
+    tempLine.setAttribute('d', pathData);
+}
+
+
+
+function onMouseUp(e) {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+
+    if (!tempLine) return;
+
+    // Check if the drop target is a valid top connector
+    const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+    if (dropTarget && dropTarget.classList.contains('connector') && dropTarget.classList.contains('top')) {
+        const p = getConnectorCenter(dropTarget);
+        const fromPos = getConnectorCenter(startConn);
+        const pathData = createCurvePath(fromPos.x, fromPos.y, p.x, p.y);
+        tempLine.setAttribute('d', pathData);
+
+        // Store the connection (fromNode, toNode, path)
+        const fromNode = startConn.closest('.node');
+        const toNode = dropTarget.closest('.node');
+        connections.push({
+            fromNode: fromNode,
+            toNode: toNode,
+            fromConnector: startConn,
+            toConnector: dropTarget,
+            line: tempLine
+        });
+
+        // Trigger balance calculation after connection is made
+        if (toNode && typeof toNode.calculateBalance === 'function') {
+            toNode.calculateBalance();
+        }
+
+        updateAllBalances();  // Trigger calculation for all balance nodes
+    } else {
+        // Remove line if not connected
+        tempLine.remove();
+    }
+
+    tempLine = null;
+    startConn = null;
+}
+
+
+
+
+
+function updateConnections() {
+    connections.forEach(conn => {
+        const fromPos = getConnectorCenter(conn.fromConnector);
+        const toPos = getConnectorCenter(conn.toConnector);
+        const pathData = createCurvePath(fromPos.x, fromPos.y, toPos.x, toPos.y);
+        conn.line.setAttribute('d', pathData);
+
+        // Trigger balance calculation if the connected node is a balance node
+        if (conn.toNode && typeof conn.toNode.calculateBalance === 'function') {
+            conn.toNode.calculateBalance();
+        }
+    });
+}
+
+
+
+
+
+
+
+function createCurvePath(x1, y1, x2, y2) {
+    // Calculate control point for the curve
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2 - 50; // Raise the curve for a nice arch
+    return `M ${x1},${y1} Q ${midX},${midY} ${x2},${y2}`;
+}
+
+
+function createCurve() {
+    const svg = document.getElementById('svg-connections');
+    const path = document.createElementNS(svg.namespaceURI, 'path');
+    path.classList.add('connection-line');
+    path.setAttribute('fill', 'none');
+    svg.appendChild(path);
+    return path;
+}
+function removeArrowsFromConnector(connector) {
+    // Find connections related to the given connector
+    const relatedConnections = connections.filter(conn =>
+        conn.fromConnector === connector || conn.toConnector === connector
+    );
+
+    // Remove each connection from the SVG and the list
+    relatedConnections.forEach(conn => {
+        if (conn.line) {
+            conn.line.remove(); // Remove the line from the SVG
+        }
+        // Remove the connection from the global list
+        connections = connections.filter(c => c !== conn);
+    });
+
+    // Update balances after removal
+    updateAllBalances();
+}
+
+
+// Attach event listener to remove arrows on double-click
+document.addEventListener('dblclick', (e) => {
+    const c = e.target;
+    // Check if the double-clicked element is a connector
+    if (c.classList.contains('connector')) {
+        removeArrowsFromConnector(c);
+    }
+});
+function addBalanceNode() {
+    const canvas = document.getElementById('canvas');
+    const node = document.createElement('div');
+    node.className = 'node balance-node';
+
+    // Title for the balance node
+    const title = document.createElement('div');
+    title.className = 'node-title';
+    title.textContent = 'Balance';
+
+    // Amount box to display the balance (non-editable)
+    const amountBox = document.createElement('div');
+    amountBox.className = 'amount-box';
+    amountBox.textContent = '$0.00';
+
+    // Top connector for incoming connections (Income and Expense)
+    const topConnector = document.createElement('div');
+    topConnector.className = 'connector top';
+
+    // Bottom connector for further connections
+    const bottomConnector = document.createElement('div');
+    bottomConnector.className = 'connector bottom';
+
+    // Options icon (ellipsis)
+    const optionsIcon = document.createElement('div');
+    optionsIcon.className = 'options-icon';
+    optionsIcon.textContent = '⋮';
+    optionsIcon.onclick = (e) => {
+        e.stopPropagation();
+        toggleMenu(node, optionsIcon);
+    };
+    node.appendChild(optionsIcon);
+
+    // Append elements to the node
+    node.appendChild(topConnector);
+    node.appendChild(title);
+    node.appendChild(amountBox);
+    node.appendChild(bottomConnector);
+    canvas.appendChild(node);
+
+    // Position at the center of the canvas
+    // Calculate the actual center of the visible viewport in relation to the canvas
+const viewportCenterX = window.innerWidth / 2;
+const viewportCenterY = window.innerHeight / 2;
+
+// Adjust the center position to take into account the current translation and scale
+const canvasRect = canvas.getBoundingClientRect();
+const centerX = (viewportCenterX - canvasRect.left) / scale;
+const centerY = (viewportCenterY - canvasRect.top) / scale;
+
+// Set the node position at the calculated center of the visible viewport
+node.style.left = `${centerX}px`;
+node.style.top = `${centerY}px`;
+
+
+    // Make the balance node draggable like a regular node
+    // Dragging functionality for balance node (same as a regular node)
+// Make the node draggable
+node.addEventListener('mousedown', function(e) {
+  if (e.target.classList.contains('connector')) return;
+  // 1) map pointer into canvas‐space
+  const cR    = canvas.getBoundingClientRect();
+  const startX = (e.clientX - cR.left) / scale;
+  const startY = (e.clientY - cR.top)  / scale;
+
+  // 2) read node’s current coords
+  const nodeX = parseFloat(node.style.left) || 0;
+  const nodeY = parseFloat(node.style.top)  || 0;
+
+  // 3) compute cursor→node offset
+  const offsetX = startX - nodeX;
+  const offsetY = startY - nodeY;
+
+  function onMouseMove(ev) {
+    // recalc pointer in canvas-space
+    const mx = (ev.clientX - cR.left) / scale;
+    const my = (ev.clientY - cR.top)  / scale;
+    // re-position so the grab point sticks
+    node.style.left = (mx - offsetX) + 'px';
+    node.style.top  = (my - offsetY) + 'px';
+    updateConnections();
+  }
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup',   onMouseUp);
+  }
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup',   onMouseUp);
+  e.stopPropagation();
+});
+
+
+
+
+    // Smooth animation for updating balance
+    function animateBalance(from, to) {
+        const duration = 300;
+        const startTime = performance.now();
+
+        function updateValue(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentValue = from + (to - from) * progress;
+            amountBox.textContent = `$${currentValue.toFixed(2)}`;
+            if (progress < 1) {
+                requestAnimationFrame(updateValue);
+            }
+        }
+        requestAnimationFrame(updateValue);
+    }
+
+    // Attach the calculation function to the node
+    node.calculateBalance = calculateBalance;
+
+    // Trigger calculation when a connection is made or removed
+    updateAllBalances();
+
+    // Calculate balance when connections change
+    // Calculate balance when connections change
+// ------------ GLOBAL calculateBalance ------------
+function calculateBalance() {
+  let totalIncome  = 0;
+  let totalExpense = 0;
+  const visited   = new Set();
+
+  function getNodeValue(n) {
+    return parseFloat(n.querySelector('.amount-box').textContent.replace(/[^0-9.-]+/g, '')) || 0;
+  }
+
+  function trace(n) {
+    let found = false;
+    connections.forEach(conn => {
+      if (conn.toNode === n && !visited.has(conn.fromNode)) {
+        visited.add(conn.fromNode);
+        found = true;
+        if (conn.fromNode.classList.contains('income-node')) {
+          totalIncome += getNodeValue(conn.fromNode);
+        }
+        else if (conn.fromNode.classList.contains('expense-node')) {
+          totalExpense += getNodeValue(conn.fromNode);
+        }
+        // continue tracing backwards
+        trace(conn.fromNode);
+      }
+    });
+    return found;
+  }
+
+  const hasConn = trace(this);
+  const balance = hasConn ? totalIncome - totalExpense : 0;
+
+  // animateBalance is your helper you already have
+  const amountBox = this.querySelector('.amount-box');
+  const current   = parseFloat(amountBox.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+  animateBalance(current, balance, amountBox);
+}
+
+function animateBalance(from, to, amountBox) {
+  const duration = 300;
+  const start    = performance.now();
+  function step(ts) {
+    const t = Math.min((ts - start) / duration, 1);
+    amountBox.textContent = `$${(from + (to - from)*t).toFixed(2)}`;
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+// -------------------------------------------------
+
+
+
+
+    // Attach the calculation function to the node
+    node.calculateBalance = calculateBalance;
+
+    // Trigger calculation when a connection is made
+    updateAllBalances();
+attachGroupDrag(node);
+    // Attach to the canvas
+    canvas.appendChild(node);
+}
+
+// Update balances for all balance nodes
+function updateAllBalances() {
+    const balanceNodes = document.querySelectorAll('.balance-node');
+    balanceNodes.forEach((node) => {
+        node.calculateBalance();
+    });
+}
+
+// Track the selected node
+let selectedNode = null;
+
+// Event listener to detect clicks on nodes and mark them as selected
+// Event listener to detect clicks on nodes and mark them as selected
+document.addEventListener('click', (event) => {
+    const node = event.target.closest('.node');
+    if (node) {
+        // Remove the selected class from the previously selected node
+        if (selectedNode) {
+            selectedNode.classList.remove('selected-node');
+        }
+
+        // Set the new selected node
+        selectedNode = node;
+        selectedNode.classList.add('selected-node');
+
+        // If it's an income node, add the income-node class for highlighting
+        if (selectedNode.classList.contains('income-node')) {
+            selectedNode.classList.add('selected-node', 'income-node');
+        } else {
+            selectedNode.classList.add('selected-node');
+        }
+    } else {
+        // Deselect if clicked outside of any node
+        if (selectedNode) {
+            selectedNode.classList.remove('selected-node');
+            selectedNode = null;
+        }
+    }
+});
+
+
+// Event listener to handle "Delete" key press
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Delete') {
+    // If you've got a multi-selection, delete them all:
+    if (multiSelectedNodes.length > 0) {
+      // Make a copy since deleteNodeByElement will mutate the array
+      const toDelete = multiSelectedNodes.slice();
+      toDelete.forEach(node => deleteNodeByElement(node));
+      // Clear out our selection state
+      multiSelectedNodes = [];
+      selectedNode      = null;
+    }
+    // Fallback: if nothing multi-selected, delete the single selectedNode
+    else if (selectedNode) {
+      deleteNodeByElement(selectedNode);
+      selectedNode = null;
+    }
+  }
+});
+
+// Double-click to start editing the node
+// Replace your existing handler with this:
+document.addEventListener('dblclick', (event) => {
+  // if we clicked *on* a connector (or inside one), do nothing
+  if (event.target.closest('.connector')) return;
+
+  // otherwise, if it’s anywhere in a node, start renaming
+  const node = event.target.closest('.node');
+  if (node) {
+    const icon = node.querySelector('.options-icon');
+    startRename(icon);
+  }
+});
+
+
+// Helper function to delete a node by its element
+function deleteNodeByElement(node) {
+    // Find and remove all connections associated with this node
+    connections = connections.filter((conn) => {
+        if (conn.fromNode === node || conn.toNode === node) {
+            // Remove the connection line from the SVG
+            if (conn.line) {
+                conn.line.remove();
+            }
+            return false; // Remove from the connections array
+        }
+        return true;
+    });
+
+    // Remove the node from the canvas
+    node.remove();
+
+    // Update balances to reflect the removal
+    updateAllBalances();
+}
+
+// Style for selected node (add this to your CSS)
+// Style for selected node and income node
+const style = document.createElement('style');
+style.innerHTML = `
+.selected-node {
+    border: 2px solid #63a4ff;
+    box-shadow: 0 0 10px #63a4ff;
+}
+.selected-node.expense-node {
+    border: 2px solid #a94442; /* Muted, darker crimson red */
+    box-shadow: 0 0 12px #a94442; /* Subtle, rich glow */
+}
+
+.selected-node.income-node {
+    border: 2px solid #155724; /* Dark green border */
+    box-shadow: 0 0 12px #155724; /* Dark green glow */
+}
+`;
+document.head.appendChild(style);
+
+
+
+
+
+
+function recalculateConnections(newNode, originalNode) {
+    connections.forEach((conn) => {
+        if (conn.toNode === originalNode) {
+            const newConn = {
+                fromNode: conn.fromNode,
+                toNode: newNode,
+                fromConnector: conn.fromConnector,
+                toConnector: conn.toConnector,
+                line: conn.line.cloneNode()
+            };
+            connections.push(newConn);
+            updateConnections();
+        }
+    });
+}
+
+ 
+  function showRowansExpense() {
+  const canvas = document.getElementById('canvas');
+
+  // 1) Clear out any previous Rowan nodes + their connections
+  document.querySelectorAll('.rowan-expense-node').forEach(n => {
+    connections = connections.filter(c => {
+      if (c.fromNode === n || c.toNode === n) {
+        c.line.remove();
+        return false;
+      }
+      return true;
+    });
+    n.remove();
+  });
+
+  // 2) Data + “base” offsets
+  const expenses = [
+    { title: 'Publix Check',                 amount: 897, type: 'income'  },
+    { title: 'Rent weekly',                  amount: 300, type: 'expense' },
+    { title: 'Electric',                     amount:  35, type: 'expense' },
+    { title: 'Internet',                     amount:  35, type: 'expense' },
+    { title: 'Grocery',                      amount: 100, type: 'expense' },
+    { title: 'Cat',                          amount:  15, type: 'expense' },
+    { title: 'Gas',                          amount:  25, type: 'expense' },
+    { title: 'Insurance',                    amount:  55, type: 'expense' },
+    { title: 'Subscriptions',                amount:  40, type: 'expense' },
+    { title: 'Credit',                       amount: 100, type: 'expense' },
+    { title: 'Left over after MUST Expenses', amount: 192, type: 'balance' }
+  ];
+
+  const basePositions = [
+    { x:   0, y: -220 },  // Publix
+    { x:-250, y: -100 },  // Rent
+    { x:   0, y: -100 },  // Electric
+    { x: 250, y: -100 },  // Internet
+    { x:-250, y:    0 },  // Grocery
+    { x:   0, y:    0 },  // Cat
+    { x: 250, y:    0 },  // Gas
+    { x:-250, y:  100 },  // Insurance
+    { x:   0, y:  100 },  // Subscriptions
+    { x: 250, y:  100 },  // Credit
+    { x:   -45, y:  220 }   // Balance
+  ];
+
+  // 3) Apply spacing factors
+  const spacingX = 1.5;  // widen columns
+  const spacingY = 1.8;  // increase row height
+  const positions = basePositions.map(({x, y}) => ({
+    x: x * spacingX,
+    y: y * spacingY
+  }));
+
+  // 4) Compute the canvas center (un-scaled)
+  const rect    = canvas.getBoundingClientRect();
+  const centerX = (window.innerWidth  / 2 - rect.left) / scale;
+  const centerY = (window.innerHeight / 2 - rect.top ) / scale;
+
+  // 5) Spawn nodes via your helpers, set text + position
+  const nodes = expenses.map((e, i) => {
+    if (e.type === 'income')       addNode('Income',  false);
+    else if (e.type === 'expense') addNode('Expense', true);
+    else                            addBalanceNode();
+
+    const n = canvas.lastElementChild;
+    n.classList.add('rowan-expense-node');
+    n.querySelector('.node-title').textContent = e.title;
+    n.querySelector('.amount-box').textContent = `$${e.amount.toFixed(2)}`;
+    n.style.left = `${centerX + positions[i].x}px`;
+    n.style.top  = `${centerY + positions[i].y}px`;
+    return n;
+  });
+
+  // 5a) Re-center the Balance node directly under Income
+  
+
+  // 6) Helper to grab connectors
+  const pick = (node, pos) => node.querySelector(`.connector.${pos}`);
+
+  // 7) Wire up the three neat chains:
+
+  // A) Publix → Rent → Grocery → Insurance → Balance
+  _connect(pick(nodes[0], 'bottom'), pick(nodes[1],  'top'));
+  _connect(pick(nodes[1], 'bottom'), pick(nodes[4],  'top'));
+  _connect(pick(nodes[4], 'bottom'), pick(nodes[7],  'top'));
+  _connect(pick(nodes[7], 'bottom'), pick(nodes[10], 'top'));
+
+  // B) Publix → Electric → Cat → Subscriptions → Balance
+  _connect(pick(nodes[0], 'bottom'), pick(nodes[2], 'top'));
+  _connect(pick(nodes[2], 'bottom'), pick(nodes[5], 'top'));
+  _connect(pick(nodes[5], 'bottom'), pick(nodes[8], 'top'));
+  _connect(pick(nodes[8], 'bottom'), pick(nodes[10], 'top'));
+
+  // C) Publix → Internet → Gas → Credit → Balance
+  _connect(pick(nodes[0], 'bottom'), pick(nodes[3], 'top'));
+  _connect(pick(nodes[3], 'bottom'), pick(nodes[6], 'top'));
+  _connect(pick(nodes[6], 'bottom'), pick(nodes[9], 'top'));
+  _connect(pick(nodes[9], 'bottom'), pick(nodes[10],'top'));
+
+  // 8) Redraw and recalc
+  updateConnections();
+  updateAllBalances();
+}
+
+// helper to push a new connection into your `connections` array
+function _connect(fromC, toC) {
+  const path = createCurve();
+  connections.push({
+    fromNode:      fromC.closest('.node'),
+    toNode:        toC.closest('.node'),
+    fromConnector: fromC,
+    toConnector:   toC,
+    line:          path
+  });
+}
+
+
+
+
+function initMarquee(e) {
+  const dx = Math.abs(e.clientX - initialPos.x);
+  const dy = Math.abs(e.clientY - initialPos.y);
+  // only once we’ve moved >5px in either direction, actually start the marquee
+  if (dx > 5 || dy > 5) {
+    isMultiSelecting = true;
+    selectionBox = document.createElement('div');
+    selectionBox.className = 'selection-box';
+    selectionBox._sx = initialPos.x;
+    selectionBox._sy = initialPos.y;
+    selectionBox.style.left = initialPos.x + 'px';
+    selectionBox.style.top  = initialPos.y + 'px';
+    document.body.appendChild(selectionBox);
+    // now wire up the real move/up handlers
+    document.removeEventListener('mousemove', initMarquee);
+    document.addEventListener('mousemove', onMultiMove);
+    document.addEventListener('mouseup'  , onMultiUp);
+  }
+}
+
+// if you mouse up before moving, just clean everything
+function cleanupMarquee() {
+  document.removeEventListener('mousemove', initMarquee);
+  document.removeEventListener('mouseup'  , cleanupMarquee);
+}
+
+// hide splash & show main app
+document.getElementById('enter-btn')
+  .addEventListener('click', () => {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('name-screen').style.display   = 'flex';
+  });
+
+    // SHOW releases screen
+    document.getElementById('releases-btn').addEventListener('click', () => {
+      document.getElementById('splash-screen').style.display  = 'none';
+      document.getElementById('releases-screen').style.display = 'flex';
+    });
+
+    // BACK from releases → splash
+    document.getElementById('releases-back-btn').addEventListener('click', () => {
+      document.getElementById('releases-screen').style.display = 'none';
+      document.getElementById('splash-screen').style.display  = 'flex';
+    });
+
+    // ESC from anywhere → splash
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['main-app','releases-screen','name-screen'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('splash-screen').style.display = 'flex';
+  }
+});
+    document.getElementById('back-btn').addEventListener('click', () => {
+  // hide main app & releases screen just in case
+  document.getElementById('main-app').style.display      = 'none';
+  document.getElementById('releases-screen').style.display = 'none';
+  // show splash
+  document.getElementById('splash-screen').style.display   = 'flex';
+});
+
+document.getElementById('name-continue-btn')
+  .addEventListener('click', () => {
+    const input = document.getElementById('budget-name-input');
+    const name  = input.value.trim() || 'My Budget';
+    // set title
+    document.getElementById('budget-title').textContent = name;
+    // swap screens
+    document.getElementById('name-screen').style.display = 'none';
+    document.getElementById('main-app').style.display    = 'block';
+  });
+  // show load screen
+document.getElementById('load-btn').addEventListener('click', () => {
+  document.getElementById('splash-screen').style.display = 'none';
+  document.getElementById('load-screen').style.display   = 'flex';
+});
+
+// back to splash
+document.getElementById('load-back-btn').addEventListener('click', () => {
+  document.getElementById('load-screen').style.display   = 'none';
+  document.getElementById('splash-screen').style.display = 'flex';
+});
+
+
+  </script>
+</body>
+</html>
