@@ -1,13 +1,15 @@
 {
-  "name": "tracker-edit",
+  "name": "trackeredit",
   "productName": "TrackerEdit",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "My Electron application description",
-  "main": "./main.js",
+  "main": "main.js",
   "author": "rowan",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --publish=always"
+    "postinstall": "electron-builder install-app-deps",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "electron-updater": "^6.6.4"
@@ -19,28 +21,23 @@
   "build": {
     "appId": "com.rowan.trackeredit",
     "productName": "TrackerEdit",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
     "files": [
       "main.js",
-      "preload.js",
-      "index.html",
-      "assets/**/*"
+      "package.json",
+      "app/**"
     ],
-    "directories": {
-      "buildResources": "assets"
-    },
     "win": {
       "target": "nsis"
     },
     "mac": {
       "target": "dmg"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "rowanbreton",
-        "repo": "tracker-edit",
-        "private": true
-      }
-    ]
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
