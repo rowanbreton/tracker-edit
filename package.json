@@ -1,43 +1,37 @@
 {
-  "name": "trackeredit",
-  "productName": "TrackerEdit",
-  "version": "1.0.9",
+  "name": "SaveSimply",
+  "productName": "SaveSimply",
   "description": "My Electron application description",
-  "main": "main.js",
+  "version": "1.1.0",
   "author": "rowan",
+  "main": "./main.js",
   "scripts": {
     "start": "electron .",
-    "postinstall": "electron-builder install-app-deps",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
   "dependencies": {
-    "electron-updater": "^6.6.4"
+    "electron-updater": "6.6.4",
+    "electron-builder": "26.0.15"
   },
   "devDependencies": {
-    "electron": "^35.0.0",
-    "electron-builder": "^26.0.15"
+    "electron": "35.0.0"
   },
   "build": {
-    "appId": "com.rowan.trackeredit",
-    "productName": "TrackerEdit",
-    "directories": {
-      "buildResources": "build",
-      "output": "dist"
-    },
+    "appId": "com.rowan.savesimply",
+    "productName": "SaveSimply",
     "files": [
-      "main.js",
-      "package.json",
-      "app/**"
+      "**/*"
     ],
-    "win": {
-      "target": "nsis"
+    "directories": {
+      "buildResources": "build"
     },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "rowan",
+        "repo": "SaveSimply"
+      }
+    ]
   }
 }
